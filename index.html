@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>여행 일정</title>
+  <style>
+    :root {
+      --primary-color: black;
+      --background-color: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: #333;
+    }
+
+    #back-button {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      z-index: 100;
+    }
+
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 1000;
+    }
+
+    .timeline-container {
+      max-width: 100%;
+      padding: 70px 16px 16px;
+    }
+
+    .day-section {
+      margin-bottom: 32px;
+    }
+
+    .day-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--primary-color);
+    }
+
+    .timeline {
+      border-left: 2px solid var(--primary-color); /* 막대기 형태 유지 */
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .timeline-item {
+      margin-bottom: 24px;
+      padding-left: 4px;
+      position: relative;
+    }
+
+    /* 둥근 원 제거 */
+    .timeline-item::before {
+      display: none;
+    }
+
+    .timeline-time {
+      display: block;
+      font-weight: bold;
+      font-size: 15px;
+      color: #222;
+      margin-bottom: 4px;
+    }
+
+    .timeline-desc {
+      display: block;
+      font-size: 14px;
+      margin-left: 0;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+
+    .info-box {
+      margin: 20px 0;
+      padding: 16px;
+      background-color: #f2f8ff;
+      border: 1px solid #d0e6ff;
+      border-radius: 12px;
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+      font-size: 18px;
+    }
+
+    .info-box p {
+      margin: 8px 0;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    @media (min-width: 600px) {
+      .timeline-container {
+        max-width: 500px;
+        margin: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loading">로딩 중...</div>
+  <button id="back-button" onclick="history.back()">← 뒤로가기</button>
+  <div class="timeline-container" id="timeline"></div>
+  <div class="timeline-container">
+    <div class="info-box" id="info-box"></div>
+  </div>
+
+  <script>
+    const data = {
+      "location": "제주특별자치도 서귀포시 성산읍 일출로 284-12",
+      "location_name": "성산일출봉",
+      "schedule_day1": ["성산일출봉 등반", "섭지코지 관광", "해녀의 집 점심식사"],
+      "schedule_day1_info": {
+        "day_start": ["08:00", "포함"],
+        "성산일출봉 등반": ["08:30~10:00", "입장료 2,000원"],
+        "섭지코지 관광": ["10:30~12:00", "무료"],
+        "해녀의 집 점심식사": ["12:30~13:30", "식비 약 15,000원"],
+        "day_end": ["18:00", "미포함"]
+      },
+      "schedule_day2": ["우도 배편 이동", "우도 자전거 여행", "흑돼지 저녁식사"],
+      "schedule_day2_info": {
+        "day_start": ["08:30", "포함"],
+        "우도 배편 이동": ["09:00~09:30", "왕복 약 8,000원"],
+        "우도 자전거 여행": ["10:00~12:30", "대여료 5,000원"],
+        "흑돼지 저녁식사": ["17:00~18:30", "식비 약 20,000원"],
+        "day_end": ["19:00", "포함"]
+      },
+      "hotel": "제주신라호텔",
+      "hotel_location": "제주특별자치도 서귀포시 색달동 3039-3",
+      "traffic_cost": "왕복 항공권 약 100,000원",
+      "fuel_cost": "차량 사용시 약 40,000원",
+      "goal": "지역 주민과의 상생 및 환경보호를 실현하는 지속가능 관광지로 선정됨"
+    };
+
+    function createDayTimeline(day, schedule, info) {
+      let html = `<div class="day-section"><div class="day-title">${day}</div><div class="timeline">`;
+      html += `<div class="timeline-item"><div class="timeline-time">시작 (${info.day_start[0]})</div><div class="timeline-desc">조식 여부: ${info.day_start[1]}</div></div>`;
+      for (let item of schedule) {
+        const [time, cost] = info[item];
+        html += `<div class="timeline-item"><div class="timeline-time">${time}</div><div class="timeline-desc">${item} (${cost})</div></div>`;
+      }
+      html += `<div class="timeline-item"><div class="timeline-time">종료 (${info.day_end[0]})</div><div class="timeline-desc">석식 여부: ${info.day_end[1]}</div></div>`;
+      html += `</div></div>`;
+      return html;
+    }
+
+    window.onload = () => {
+      const container = document.getElementById('timeline');
+      const day1 = createDayTimeline("Day 1", data.schedule_day1, data.schedule_day1_info);
+      const day2 = createDayTimeline("Day 2", data.schedule_day2, data.schedule_day2_info);
+      container.innerHTML = `<h2 style="text-align:center; color: var(--primary-color); margin-bottom: 24px;">${data.location_name} 일정</h2>${day1}${day2}`;
+
+      const infoBox = document.getElementById('info-box');
+      infoBox.innerHTML = `
+        <h3>여행 정보 요약</h3>
+        <p><strong>숙소:</strong> ${data.hotel} (${data.hotel_location})</p>
+        <p><strong>교통비:</strong> ${data.traffic_cost}</p>
+        <p><strong>유류비:</strong> ${data.fuel_cost}</p>
+        <p><strong>지속가능성 이유:</strong><br>${data.goal}</p>
+      `;
+
+      document.getElementById('loading').style.display = 'none';
+    };
+  </script>
+</body>
+</html>
