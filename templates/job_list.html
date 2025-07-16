@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>검색 결과</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f9ff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #007acc;
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: #e6f2ff;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1.1em;
+    }
+
+    .back-button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007acc;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .back-button:hover {
+      background-color: #005f99;
+    }
+
+    .button-container {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>검색 결과</h1>
+    <ul>
+      {% for item in results %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+
+
+    <div class="button-container">
+      <a href="/" class="back-button">← 뒤로가기</a>
+    </div>
+  </div>
+</body>
+</html>

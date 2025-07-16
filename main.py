@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from funcs import html_page, gpt_request, add_job, loading_page, schedule, add_job_success
+from funcs import *
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-jobs = {}
+jobs = []
 
 @app.get("/", response_class=HTMLResponse)
 async def main():
@@ -27,7 +27,7 @@ async def travel():
     )
 
 @app.get("/search_travel", response_class=HTMLResponse)
-async def search_travel(request: Request,query: str = "",):
+async def search_travel(request: Request,query: str = ""):
     return templates.TemplateResponse("loading.html", {
         "request": request,
         "redirect_url": f"/schedule_travel/{query}",
@@ -54,9 +54,23 @@ async def job_add():
 
 @app.get("/submit_job/{place}/{location}/{job_name}",response_class=HTMLResponse)
 async def submit_job(place, location, job_name):
-    jobs["place"] = {
-        "place":place,
-        "location":location,
-        "job":job_name
-    }
-    return add_job_success()
+
+    lat, lon = get_lat_lon(location)
+
+    if lat is None or lon is None:
+        return add_job_fail()
+    else:
+        jobs.append({
+            "place":place,
+            "address":location,
+            "job":job_name,
+            "lat":lat,
+            "lon":lon,
+        })
+        print(jobs)
+
+        return add_job_success()
+
+@app.get("/search_job")
+async def search_travel(request: Request,query: str = ""):
+    return templates.TemplateResponse("job_list.html", {"request": request, "results": find_nearby_jobs(jobs,query)})

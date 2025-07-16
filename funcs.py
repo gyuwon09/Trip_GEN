@@ -1,5 +1,8 @@
 import requests
 import openai
+from geopy.distance import geodesic
+from geopy.geocoders import Nominatim
+import pandas as pd
 
 imgs = {
     "해운대 해수욕장":"https://i.namu.wiki/i/hkDOgJHC40yiIFKQDRz7YjHpzWrL9vCTT7mve4TF6Lj-GpGsBpvT8WlXbwOT_To1Ndl1zKrVLQ-SiwaGNFOgQA.webp",
@@ -25,6 +28,7 @@ def html_page(
     else:
         active_a = ''
         active_b = 'class="active"'
+        search_adress = "/search_job"
 
     image_url_a = get_image_urls(place_a)[0]
     image_url_b = get_image_urls(place_b)[0]
@@ -816,3 +820,126 @@ def add_job_success():
     </body>
     </html>
     """
+
+def add_job_fail():
+    return """
+    <!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>등록 실패</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff5f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      color: #d9534f;
+    }
+
+    p {
+      margin-top: 10px;
+      color: #555;
+    }
+
+    .buttons {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .buttons a {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      text-decoration: none;
+      color: white;
+      background-color: #d9534f;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .buttons a:hover {
+      background-color: #c9302c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>등록 실패</h1>
+    <p>위도와 경도를 불러오는데 실패했습니다. 주소를 재확인하고 문제가 해결되지 않는다면 주소 상세하게 입력하지 마십시오.</p>
+
+    <div class="buttons">
+      <a href="/">홈으로</a>
+      <a href="/job_add">다시 시도하기</a>
+    </div>
+  </div>
+</body>
+</html>
+
+    """
+
+def get_lat_lon(address):
+    geolocator = Nominatim(user_agent="geoapi")
+    location = geolocator.geocode(address)
+
+    if location:
+        return location.latitude, location.longitude
+    else:
+        return None, None
+
+def find_nearby_jobs(data, user_input):
+    df = pd.DataFrame(data)
+
+    if 'lat' not in df.columns or 'lon' not in df.columns:
+        return "입력된 데이터에 'lat' 또는 'lon' 정보가 없습니다."
+
+    # 사용자 주소 -> 좌표 변환
+    geolocator = Nominatim(user_agent="tourism-job-finder")
+    location = geolocator.geocode(user_input)
+
+    if location is None:
+        return "입력한 주소를 찾을 수 없습니다."
+
+    user_coord = (location.latitude, location.longitude)
+
+    try:
+        # 거리 계산
+        df['distance_km'] = df.apply(
+            lambda row: geodesic(user_coord, (row['lat'], row['lon'])).kilometers, axis=1
+        )
+    except Exception as e:
+        return f"거리 계산 중 오류 발생: {e}"
+
+    # 거리순 정렬
+    sorted_df = df.sort_values(by='distance_km')
+
+    # 결과 출력
+    results = []
+    for _, row in sorted_df.iterrows():
+        results.append(f"{row['place']} - {row['job']} ({row['distance_km']:.2f} km)")
+    return results
