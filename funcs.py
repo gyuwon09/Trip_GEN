@@ -429,7 +429,7 @@ def add_job():
     <label for="place">관광지 명칭 *</label>
     <input type="text" id="place" name="place" required>
 
-    <label for="address">주소 *</label>
+    <label for="address">주소</label>
     <input type="text" id="address" name="address" required>
 
     <label for="job">업무 이름 *</label>
@@ -447,7 +447,7 @@ def add_job():
       const job = encodeURIComponent(document.getElementById("job").value.trim());
 
       // 입력값이 비어있는지 확인
-      if (!place || !address || !job) {
+      if (!place || !job) {
         alert("모든 항목을 입력해주세요.");
         return;
       }
@@ -903,14 +903,18 @@ def add_job_fail():
 
     """
 
-def get_lat_lon(address):
+def get_lat_lon(place,address):
     geolocator = Nominatim(user_agent="geoapi")
-    location = geolocator.geocode(address)
+    location = geolocator.geocode(place)
 
     if location:
         return location.latitude, location.longitude
     else:
-        return None, None
+        location2 = geolocator.geocode(address)
+        if location2:
+            return location.latitude, location.longitude
+        else:
+            return None, None
 
 def find_nearby_jobs(data, user_input):
     df = pd.DataFrame(data)

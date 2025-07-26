@@ -55,7 +55,7 @@ async def job_add():
 @app.get("/submit_job/{place}/{location}/{job_name}",response_class=HTMLResponse)
 async def submit_job(place, location, job_name):
 
-    lat, lon = get_lat_lon(location)
+    lat, lon = get_lat_lon(place,location)
 
     if lat is None or lon is None:
         return add_job_fail()
